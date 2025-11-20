@@ -22,7 +22,7 @@ def load_data():
 
 all_data = load_data()
 
-# --- ÖZEL SESLİ BUTON ---
+# --- ÖZEL SESLİ BUTON (iOS Uyumlu) ---
 def clickable_audio_word(text, label_text=None, key_suffix=""):
     try:
         tts = gTTS(text=text, lang='fr')
@@ -121,8 +121,14 @@ def next_question():
     else:
         st.session_state.mode = 'result'
 
-# --- YAN MENÜ ---
+# --- YAN MENÜ (NAVİGASYON) ---
 with st.sidebar:
+    st.title("Menü")
+    
+    # Sekme Seçimi (Navigasyon)
+    selected_tab = st.radio("Gitmek istediğin yer:", ["🏠 Çalışma & Test", "📜 Geçmişim"])
+    
+    st.markdown("---")
     st.header("📊 Gelişim Raporu")
     total_words = len(all_data)
     learned_count = len(st.session_state.learned_words)
@@ -134,87 +140,120 @@ with st.sidebar:
     st.write(f"**{learned_count} / {total_words}** Kelime Öğrenildi")
     
     st.markdown("---")
-    st.subheader("🏆 Seviyen")
-    if learned_count < 50: st.info("👶 Başlangıç")
-    elif learned_count < 200: st.success("🎓 Çırak")
-    elif learned_count < 500: st.warning("🔥 Usta")
-    else: st.error("👑 Efsane")
+    if learned_count < 50: st.info("👶 Seviye: Başlangıç")
+    elif learned_count < 200: st.success("🎓 Seviye: Çırak")
+    elif learned_count < 500: st.warning("🔥 Seviye: Usta")
+    else: st.error("👑 Seviye: Efsane")
 
-# --- ANA SAYFA ---
-st.title("🇫🇷 Fransızca Zarf Ustası")
+# ==========================================
+# BÖLÜM 1: ÇALIŞMA VE TEST EKRANI
+# ==========================================
+if selected_tab == "🏠 Çalışma & Test":
+    st.title("🇫🇷 Fransızca Zarf Ustası")
 
-# MOD 1: ÇALIŞMA
-if st.session_state.mode == 'study':
-    st.info("🔊 Kelimelere tıkla, dinle ve ezberle.")
-    
-    col1, col2 = st.columns(2)
-    for i, word in enumerate(st.session_state.batch):
-        with (col1 if i < 10 else col2):
-            clickable_audio_word(word['fr'], key_suffix=f"study_{i}")
-            
-            st.write(f"🇹🇷 **{word['tr']}**")
-            
-            # --- İŞTE DEĞİŞİKLİK BURADA ---
-            # Yeşil Yuvarlak (🟢) ve Kırmızı Yuvarlak (🔴) kullandık.
-            st.write(f"🟢 **Eş:** {word.get('syn', '-')} | 🔴 **Zıt:** {word.get('ant', '-')}")
-            
-            st.divider()
-
-    if st.button("🧠 Hazırım, Testi Başlat", type="primary", use_container_width=True):
-        start_quiz()
-        st.rerun()
-
-# MOD 2: TEST
-elif st.session_state.mode == 'quiz':
-    current_word = st.session_state.batch[st.session_state.q_index]
-    batch_progress = (st.session_state.q_index + 1) / len(st.session_state.batch)
-    st.progress(batch_progress, text=f"Soru {st.session_state.q_index + 1} / 20")
-    
-    st.header("Bu kelimenin anlamı nedir?")
-    clickable_audio_word(current_word['fr'], key_suffix=f"quiz_{st.session_state.q_index}")
-    st.write("")
-
-    if st.session_state.answer_state is None:
-        opts = st.session_state.current_options
-        c1, c2 = st.columns(2)
-        with c1:
-            if st.button(opts[0], use_container_width=True):
-                submit_answer(opts[0])
-                st.rerun()
-            if st.button(opts[1], use_container_width=True):
-                submit_answer(opts[1])
-                st.rerun()
-        with c2:
-            if st.button(opts[2], use_container_width=True):
-                submit_answer(opts[2])
-                st.rerun()
-            if st.button(opts[3], use_container_width=True):
-                submit_answer(opts[3])
-                st.rerun()
-
-    else:
-        if st.session_state.answer_state == 'correct':
-            st.success("✅ **Tebrikler! Doğru Bildin.**")
-        else:
-            st.error("❌ **Yanlış!**")
-            
-            # Yanlış yapınca da detayları yeşil/kırmızı ile gösterelim
-            st.info(f"Doğru Cevap: **{current_word['tr']}**")
-            st.write(f"🟢 **Eş:** {current_word.get('syn', '-')} | 🔴 **Zıt:** {current_word.get('ant', '-')}")
+    # MOD 1: ÇALIŞMA
+    if st.session_state.mode == 'study':
+        st.info("🔊 Kelimelere tıkla, dinle ve ezberle.")
         
-        if st.button("➡️ Sıradaki Soru", type="primary", use_container_width=True):
-            next_question()
+        col1, col2 = st.columns(2)
+        for i, word in enumerate(st.session_state.batch):
+            with (col1 if i < 10 else col2):
+                clickable_audio_word(word['fr'], key_suffix=f"study_{i}")
+                st.write(f"🇹🇷 **{word['tr']}**")
+                st.write(f"🟢 **Eş:** {word.get('syn', '-')} | 🔴 **Zıt:** {word.get('ant', '-')}")
+                st.divider()
+
+        if st.button("🧠 Hazırım, Testi Başlat", type="primary", use_container_width=True):
+            start_quiz()
             st.rerun()
 
-# MOD 3: SONUÇ
-elif st.session_state.mode == 'result':
-    score = st.session_state.score
-    total = len(st.session_state.batch)
-    st.balloons()
+    # MOD 2: TEST
+    elif st.session_state.mode == 'quiz':
+        current_word = st.session_state.batch[st.session_state.q_index]
+        batch_progress = (st.session_state.q_index + 1) / len(st.session_state.batch)
+        st.progress(batch_progress, text=f"Soru {st.session_state.q_index + 1} / 20")
+        
+        st.header("Bu kelimenin anlamı nedir?")
+        clickable_audio_word(current_word['fr'], key_suffix=f"quiz_{st.session_state.q_index}")
+        st.write("")
+
+        if st.session_state.answer_state is None:
+            opts = st.session_state.current_options
+            c1, c2 = st.columns(2)
+            with c1:
+                if st.button(opts[0], use_container_width=True):
+                    submit_answer(opts[0])
+                    st.rerun()
+                if st.button(opts[1], use_container_width=True):
+                    submit_answer(opts[1])
+                    st.rerun()
+            with c2:
+                if st.button(opts[2], use_container_width=True):
+                    submit_answer(opts[2])
+                    st.rerun()
+                if st.button(opts[3], use_container_width=True):
+                    submit_answer(opts[3])
+                    st.rerun()
+
+        else:
+            if st.session_state.answer_state == 'correct':
+                st.success("✅ **Tebrikler! Doğru Bildin.**")
+            else:
+                st.error("❌ **Yanlış!**")
+                st.info(f"Doğru Cevap: **{current_word['tr']}**")
+                st.write(f"🟢 **Eş:** {current_word.get('syn', '-')} | 🔴 **Zıt:** {current_word.get('ant', '-')}")
+            
+            if st.button("➡️ Sıradaki Soru", type="primary", use_container_width=True):
+                next_question()
+                st.rerun()
+
+    # MOD 3: SONUÇ
+    elif st.session_state.mode == 'result':
+        score = st.session_state.score
+        total = len(st.session_state.batch)
+        st.balloons()
+        st.success(f"🏁 Tur Tamamlandı! Skorun: {score} / {total}")
+        st.info("Doğru bildiğin kelimeler 'Geçmişim' sekmesine eklendi!")
+        
+        if st.button("➡️ Yeni 20 Kelime Getir", type="primary", use_container_width=True):
+            new_batch()
+            st.rerun()
+
+# ==========================================
+# BÖLÜM 2: GEÇMİŞİM (SÖZLÜK) EKRANI
+# ==========================================
+elif selected_tab == "📜 Geçmişim":
+    st.title("📜 Öğrendiğim Kelimeler")
+    st.markdown("Burada sadece **testlerde doğru cevapladığın** kelimeleri görebilirsin.")
     
-    st.success(f"🏁 Tur Tamamlandı! Skorun: {score} / {total}")
-    st.info("Doğru bildiğin kelimeler sol taraftaki genel ilerlemene eklendi!")
+    learned_list = list(st.session_state.learned_words)
     
-    if st.button("➡️ Yeni 20 Kelime Getir", type="primary", use_container_width=True):
-        new_batch()
-        st.rerun()
+    if not learned_list:
+        st.warning("📭 Henüz hiç kelime öğrenmedin. 'Çalışma & Test' bölümüne gidip pratik yap!")
+    else:
+        # Kelimeleri Alfabetik Sırala (A-Z)
+        learned_list.sort()
+        
+        st.success(f"Toplam **{len(learned_list)}** kelime öğrendin!")
+        
+        # Arama Kutusu
+        search = st.text_input("🔍 Geçmişte Ara:", placeholder="Örn: Toujours")
+        
+        # Liste Görünümü
+        for i, fr_word in enumerate(learned_list):
+            # Kelimenin tüm verisini ana listeden bul
+            full_data = next((item for item in all_data if item["fr"] == fr_word), None)
+            
+            if full_data:
+                # Eğer arama yapılıyorsa ve kelime uymuyorsa gösterme
+                if search and (search.lower() not in full_data['fr'].lower() and search.lower() not in full_data['tr'].lower()):
+                    continue
+
+                with st.expander(f"🇫🇷 **{full_data['fr']}**"):
+                    col_a, col_b = st.columns([1, 3])
+                    with col_a:
+                        # Geçmişte de dinleyebilmek için ses butonu
+                        clickable_audio_word(full_data['fr'], key_suffix=f"history_{i}")
+                    with col_b:
+                        st.markdown(f"🇹🇷 **Anlamı:** {full_data['tr']}")
+                        st.write(f"🟢 **Eş:** {full_data.get('syn', '-')} | 🔴 **Zıt:** {full_data.get('ant', '-')}")
