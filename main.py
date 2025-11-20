@@ -22,7 +22,7 @@ def load_data():
 
 all_data = load_data()
 
-# --- ÖZEL SESLİ BUTON (iOS Uyumlu) ---
+# --- ÖZEL SESLİ BUTON ---
 def clickable_audio_word(text, label_text=None, key_suffix=""):
     try:
         tts = gTTS(text=text, lang='fr')
@@ -32,7 +32,6 @@ def clickable_audio_word(text, label_text=None, key_suffix=""):
         display_text = label_text if label_text else text
         unique_id = f"audio_{key_suffix}_{text.replace(' ', '_')}"
         
-        # HTML içinde Markdown kullanmıyoruz, saf HTML
         html_code = f"""
             <html>
             <body>
@@ -56,7 +55,7 @@ def clickable_audio_word(text, label_text=None, key_suffix=""):
                         align-items: center;
                         box-shadow: 0 1px 3px rgba(0,0,0,0.1);
                         -webkit-appearance: none;
-                        margin-bottom: 10px;
+                        margin-bottom: 8px;
                     ">
                     <span style="margin-right: 12px; font-size: 22px;">🔊</span> {display_text}
                 </button>
@@ -151,12 +150,14 @@ if st.session_state.mode == 'study':
     col1, col2 = st.columns(2)
     for i, word in enumerate(st.session_state.batch):
         with (col1 if i < 10 else col2):
-            # Markdown yerine Subheader ve Write kullanarak hatayı engelliyoruz
             clickable_audio_word(word['fr'], key_suffix=f"study_{i}")
             
-            # DÜZELTME: st.markdown yerine st.write kullanımı
             st.write(f"🇹🇷 **{word['tr']}**")
-            st.caption(f"🔄 {word.get('syn', '-')} | ↔️ {word.get('ant', '-')}")
+            
+            # --- İŞTE DEĞİŞİKLİK BURADA ---
+            # Yeşil Yuvarlak (🟢) ve Kırmızı Yuvarlak (🔴) kullandık.
+            st.write(f"🟢 **Eş:** {word.get('syn', '-')} | 🔴 **Zıt:** {word.get('ant', '-')}")
+            
             st.divider()
 
     if st.button("🧠 Hazırım, Testi Başlat", type="primary", use_container_width=True):
@@ -169,7 +170,6 @@ elif st.session_state.mode == 'quiz':
     batch_progress = (st.session_state.q_index + 1) / len(st.session_state.batch)
     st.progress(batch_progress, text=f"Soru {st.session_state.q_index + 1} / 20")
     
-    # DÜZELTME: st.markdown yerine st.header kullanımı
     st.header("Bu kelimenin anlamı nedir?")
     clickable_audio_word(current_word['fr'], key_suffix=f"quiz_{st.session_state.q_index}")
     st.write("")
@@ -197,7 +197,10 @@ elif st.session_state.mode == 'quiz':
             st.success("✅ **Tebrikler! Doğru Bildin.**")
         else:
             st.error("❌ **Yanlış!**")
+            
+            # Yanlış yapınca da detayları yeşil/kırmızı ile gösterelim
             st.info(f"Doğru Cevap: **{current_word['tr']}**")
+            st.write(f"🟢 **Eş:** {current_word.get('syn', '-')} | 🔴 **Zıt:** {current_word.get('ant', '-')}")
         
         if st.button("➡️ Sıradaki Soru", type="primary", use_container_width=True):
             next_question()
@@ -209,7 +212,6 @@ elif st.session_state.mode == 'result':
     total = len(st.session_state.batch)
     st.balloons()
     
-    # DÜZELTME: Karmaşık HTML yerine basit Streamlit kullanımı
     st.success(f"🏁 Tur Tamamlandı! Skorun: {score} / {total}")
     st.info("Doğru bildiğin kelimeler sol taraftaki genel ilerlemene eklendi!")
     
